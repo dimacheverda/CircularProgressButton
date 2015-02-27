@@ -8,9 +8,10 @@
 
 import UIKit
 
-enum ButtonState: Int {
-  case Original
-  case Small
+enum ButtonState: String {
+  case Original = "Original"
+  case Animating = "Animating"
+  case Small = "Small"
 }
 
 class CircularProgressButton: UIButton {
@@ -25,10 +26,12 @@ class CircularProgressButton: UIButton {
         progress = 1.0
       }
       
-      if Int(progress) == Int(1) {
-        self.makeOriginal(0.2)
-      }
       circularProgressLayer.strokeEnd = progress
+      
+      if Int(progress) == Int(1) {
+        buttonState = .Animating
+        self.makeOriginalWithDelay(0.2)
+      }
     }
   }
   
@@ -49,6 +52,8 @@ class CircularProgressButton: UIButton {
   var smallColor: CGColorRef = UIColor.whiteColor().CGColor
   var smallBorderColor: CGColorRef = UIColor(white: 0.9, alpha: 1).CGColor
   
+  var pressedColor: CGColorRef = UIColor(red:0.14, green:0.6, blue:0.49, alpha:1).CGColor
+  
   var circularProgressLayer: CAShapeLayer
   var foregroundLayer: CALayer
   
@@ -62,19 +67,27 @@ class CircularProgressButton: UIButton {
     
     super.init(frame: frame)
     
-    prepareParameters()
-    prepareLayers()
-    
-    layer.masksToBounds = true
-    
-    layer.addSublayer(foregroundLayer)
-    layer.addSublayer(circularProgressLayer)
+    prepare()
   }
   
   required init(coder aDecoder: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
+    
+    foregroundLayer = CALayer()
+    circularProgressLayer = CAShapeLayer()
+    
+    super.init(coder: aDecoder)
+    
+    prepare()
   }
 
+  private func prepare() {
+    prepareParameters()
+    prepareForegroundLayer()
+    prepareCircularLayer()
+    
+    layer.masksToBounds = true
+  }
+  
   private func prepareParameters() {
     originalBounds = layer.bounds
     
@@ -83,18 +96,22 @@ class CircularProgressButton: UIButton {
     smallCornerRadius = smallBounds.height/2
   }
   
-  func prepareLayers() {
+  func prepareForegroundLayer() {
     foregroundLayer.frame = layer.frame
     foregroundLayer.masksToBounds = true
     foregroundLayer.cornerRadius = originalCornerRadius
     foregroundLayer.backgroundColor = originalColor
-    foregroundLayer.bounds = originalBounds
+//    foregroundLayer.bounds = originalBounds
     foregroundLayer.borderWidth = borderWidth
     foregroundLayer.borderColor = originalBorderColor
     
+    layer.addSublayer(foregroundLayer)
+  }
+  
+  func prepareCircularLayer() {
     circularProgressLayer.frame = CGRectMake(0, 0, layer.bounds.height, layer.bounds.height)
     circularProgressLayer.position = layer.position
-    circularProgressLayer.hidden = true
+    circularProgressLayer.hidden = false
     circularProgressLayer.backgroundColor = UIColor.clearColor().CGColor
     circularProgressLayer.path = circlePath().CGPath
     circularProgressLayer.strokeStart = 0
@@ -102,12 +119,15 @@ class CircularProgressButton: UIButton {
     circularProgressLayer.lineWidth = borderWidth
     circularProgressLayer.fillColor = UIColor.clearColor().CGColor
     circularProgressLayer.strokeColor = originalBorderColor
+    
+    layer.addSublayer(circularProgressLayer)
   }
   
   func resetProgressLayer() {
     progress = 0
     circularProgressLayer.strokeEnd = 0
   }
+  
   
   // MARK: - Helpers
   
@@ -121,11 +141,11 @@ class CircularProgressButton: UIButton {
     return path
   }
   
-  func makeSmall(delay: CFTimeInterval) {
+  func makeSmallWithDelay(delay: CFTimeInterval) {
     changeTo(.Small, targetLayer: foregroundLayer, delay: delay)
   }
   
-  func makeOriginal(delay: CFTimeInterval) {
+  func makeOriginalWithDelay(delay: CFTimeInterval) {
     changeTo(.Original, targetLayer: foregroundLayer, delay: delay)
   }
   
@@ -136,9 +156,8 @@ class CircularProgressButton: UIButton {
     group.timingFunction = CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseOut)
     group.beginTime = CACurrentMediaTime() + delay
     group.fillMode = kCAFillModeForwards
-    group.removedOnCompletion = true
+    group.removedOnCompletion = false
     group.delegate = self
-  
     
     let name = (state == .Small) ? "makeSmall" : "makeOriginal"
     group.setValue(name, forKey: "name")
@@ -169,14 +188,37 @@ class CircularProgressButton: UIButton {
     targetLayer.addAnimation(group, forKey: "anim")
   }
   
-//  private var touchStart: CGPoint = CGPointZero
-  private var touchEnd: CGPoint = CGPointZero
+  func changeButtonColorTo(color: CGColorRef) {
+    foregroundLayer.backgroundColor = color
+    foregroundLayer.borderColor = color
+  }
+  
+  
+  // MARK: - Touch Tracking
   
   override func beginTrackingWithTouch(touch: UITouch, withEvent event: UIEvent) -> Bool {
     super.beginTrackingWithTouch(touch, withEvent: event)
     
+    println("begin")
+    
     if event.type == UIEventType.Touches {
-//      touchStart = touch.locationInView(self)
+      println("beginChange")
+      changeButtonColorTo(pressedColor)
+    }
+    return true
+  }
+  
+  override func continueTrackingWithTouch(touch: UITouch, withEvent event: UIEvent) -> Bool {
+    super.continueTrackingWithTouch(touch, withEvent: event)
+    
+    println("continue")
+    
+    var touchEnd = touch.locationInView(self)
+    if !CGRectContainsPoint(bounds, touchEnd) {
+      changeButtonColorTo(originalColor)
+      println("continueOutOfBounds")
+      
+      return false
     }
     return true
   }
@@ -185,14 +227,21 @@ class CircularProgressButton: UIButton {
     super.endTrackingWithTouch(touch, withEvent: event)
     
     if event.type == UIEventType.Touches {
-      touchEnd = touch.locationInView(self)
+      
+      CATransaction.begin()
+      CATransaction.setDisableActions(true)
+      println("endTracking")
+      changeButtonColorTo(originalColor)
+      CATransaction.commit()
+      
+      var touchEnd = touch.locationInView(self)
       if CGRectContainsPoint(bounds, touchEnd) {
-        makeSmall(0)
+        if buttonState == .Original {
+          makeSmallWithDelay(0)
+        }
       }
-      println("good")
-//      println("start: \(touchStart)")
-      println("end: \(touchEnd)")
     }
+    println()
   }
   
   
@@ -200,35 +249,24 @@ class CircularProgressButton: UIButton {
   
   override func animationDidStart(anim: CAAnimation!) {
     
-    // disable userInteraction to prevent double tap
-    self.userInteractionEnabled = false
+    self.buttonState = .Animating
     
     let nameValue = anim.valueForKey("name") as? String
     if let name = nameValue {
       if name == "makeSmall" {
-        println("animationDidStart - makeSmall")
-        
-        
       }
       if name == "makeOriginal" {
-        
         CATransaction.begin()
-        CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
-
+        CATransaction.setDisableActions(true)
         circularProgressLayer.hidden = true
-        
         CATransaction.commit()
-        
-        println("animationDidStart - makeOriginal")
       }
     }
   }
   
   override func animationDidStop(anim: CAAnimation!, finished flag: Bool) {
     
-    self.userInteractionEnabled = true
-    
-    let nameValue = anim.valueForKey("name") as? String
+   let nameValue = anim.valueForKey("name") as? String
     if let name = nameValue {
       if name == "makeSmall" {
         
@@ -237,42 +275,32 @@ class CircularProgressButton: UIButton {
           
           CATransaction.begin()
           CATransaction.setDisableActions(true)
-          
-          circularProgressLayer.hidden = false
-          
           targetLayer.backgroundColor = smallColor
           targetLayer.bounds = smallBounds
           targetLayer.cornerRadius = smallCornerRadius
           targetLayer.borderColor = smallBorderColor
-          
+          circularProgressLayer.hidden = false
           
           resetProgressLayer()
-          
           CATransaction.commit()
           
           buttonState = .Small
         }
-        println("animationDidStop - makeSmall")
       }
       if name == "makeOriginal" {
-        
         if flag == true {
-          
           let targetLayer: CALayer = anim.valueForKey("layer")! as CALayer
           
           CATransaction.begin()
           CATransaction.setDisableActions(true)
-          
           targetLayer.backgroundColor = originalColor
           targetLayer.bounds = originalBounds
           targetLayer.cornerRadius = originalCornerRadius
           targetLayer.borderColor = originalBorderColor
-          
           CATransaction.commit()
           
           buttonState = .Original
         }
-        println("animationDidStop - makeOriginal")
       }
     }
   }

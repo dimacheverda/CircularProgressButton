@@ -33,17 +33,7 @@ class ViewController: UIViewController {
   }
 
   func buttonClicked() {
-    
-    
     println()
-    
-//    if button.buttonState == .Small {
-//      println("viewControler - makeOriginal")
-//      button.makeOriginal()
-//    } else {
-//      println("viewControler - makeSmall")
-//      button.makeSmall()
-//    }
   }
   
   @IBAction func plusPressed(sender: AnyObject) {
