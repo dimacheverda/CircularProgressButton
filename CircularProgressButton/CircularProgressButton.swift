@@ -39,23 +39,24 @@ class CircularProgressButton: UIButton {
   // MARK: - Private Properties
   
   private var animationDuration: CFTimeInterval = 0.2
-  var buttonState: ButtonState = .Original
+  private var buttonState: ButtonState = .Original
   private var borderWidth: CGFloat = 5.0
   
   var originalCornerRadius: CGFloat = 0
-  var originalBounds: CGRect = CGRectZero
+  private var originalBounds: CGRect = CGRectZero
   var originalColor: CGColorRef = UIColor(red:0.14, green:0.6, blue:0.79, alpha:1).CGColor
   var originalBorderColor: CGColorRef = UIColor(red:0.14, green:0.6, blue:0.79, alpha:1).CGColor
   
   var smallCornerRadius: CGFloat = 0
-  var smallBounds: CGRect = CGRectZero
+  private var smallBounds: CGRect = CGRectZero
   var smallColor: CGColorRef = UIColor.whiteColor().CGColor
   var smallBorderColor: CGColorRef = UIColor(white: 0.9, alpha: 1).CGColor
   
-  var pressedColor: CGColorRef = UIColor(red:0.14, green:0.6, blue:0.49, alpha:1).CGColor
+  // TODO: implement PressedColor effect
+  private var pressedColor: CGColorRef = UIColor(red:0.14, green:0.6, blue:0.49, alpha:1).CGColor
   
-  var circularProgressLayer: CAShapeLayer
-  var foregroundLayer: CALayer
+  private var circularProgressLayer: CAShapeLayer
+  private var foregroundLayer: CALayer
   
   
   // MARK: - Initializers
@@ -96,19 +97,19 @@ class CircularProgressButton: UIButton {
     smallCornerRadius = smallBounds.height/2
   }
   
-  func prepareForegroundLayer() {
+  private func prepareForegroundLayer() {
     foregroundLayer.frame = layer.frame
     foregroundLayer.masksToBounds = true
     foregroundLayer.cornerRadius = originalCornerRadius
     foregroundLayer.backgroundColor = originalColor
-//    foregroundLayer.bounds = originalBounds
+    foregroundLayer.bounds = originalBounds
     foregroundLayer.borderWidth = borderWidth
     foregroundLayer.borderColor = originalBorderColor
     
     layer.addSublayer(foregroundLayer)
   }
   
-  func prepareCircularLayer() {
+  private func prepareCircularLayer() {
     circularProgressLayer.frame = CGRectMake(0, 0, layer.bounds.height, layer.bounds.height)
     circularProgressLayer.position = layer.position
     circularProgressLayer.hidden = false
@@ -123,7 +124,7 @@ class CircularProgressButton: UIButton {
     layer.addSublayer(circularProgressLayer)
   }
   
-  func resetProgressLayer() {
+  private func resetProgressLayer() {
     progress = 0
     circularProgressLayer.strokeEnd = 0
   }
@@ -141,11 +142,11 @@ class CircularProgressButton: UIButton {
     return path
   }
   
-  func makeSmallWithDelay(delay: CFTimeInterval) {
+  private func makeSmallWithDelay(delay: CFTimeInterval) {
     changeTo(.Small, targetLayer: foregroundLayer, delay: delay)
   }
   
-  func makeOriginalWithDelay(delay: CFTimeInterval) {
+  private func makeOriginalWithDelay(delay: CFTimeInterval) {
     changeTo(.Original, targetLayer: foregroundLayer, delay: delay)
   }
   
@@ -188,7 +189,7 @@ class CircularProgressButton: UIButton {
     targetLayer.addAnimation(group, forKey: "anim")
   }
   
-  func changeButtonColorTo(color: CGColorRef) {
+  private func changeButtonColorTo(color: CGColorRef) {
     foregroundLayer.backgroundColor = color
     foregroundLayer.borderColor = color
   }
@@ -202,7 +203,6 @@ class CircularProgressButton: UIButton {
     println("begin")
     
     if event.type == UIEventType.Touches {
-      println("beginChange")
       changeButtonColorTo(pressedColor)
     }
     return true
@@ -211,13 +211,9 @@ class CircularProgressButton: UIButton {
   override func continueTrackingWithTouch(touch: UITouch, withEvent event: UIEvent) -> Bool {
     super.continueTrackingWithTouch(touch, withEvent: event)
     
-    println("continue")
-    
     var touchEnd = touch.locationInView(self)
     if !CGRectContainsPoint(bounds, touchEnd) {
       changeButtonColorTo(originalColor)
-      println("continueOutOfBounds")
-      
       return false
     }
     return true
@@ -230,7 +226,6 @@ class CircularProgressButton: UIButton {
       
       CATransaction.begin()
       CATransaction.setDisableActions(true)
-      println("endTracking")
       changeButtonColorTo(originalColor)
       CATransaction.commit()
       
