@@ -2,7 +2,6 @@ CircularProgressButton
 ===================
 
 Subclass of **UIButton** which animates into and display circular progress
-*Entirely written in swift*
 
 Features
 ---------
