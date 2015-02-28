@@ -42,6 +42,8 @@ Installing
  3. Use it
 
 
+---------
+
 > The MIT License (MIT)
 > 
 > Copyright (c) 2015 Dmytro Cheverda
