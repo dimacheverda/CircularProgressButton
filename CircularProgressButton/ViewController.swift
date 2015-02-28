@@ -20,20 +20,12 @@ class ViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     
-    view.backgroundColor = UIColor.yellowColor()
-    
     button.center = view.center
     button.addTarget(self, action: "buttonClicked", forControlEvents: .TouchUpInside)
     view.addSubview(button)
   }
 
-  override func didReceiveMemoryWarning() {
-    super.didReceiveMemoryWarning()
-    // Dispose of any resources that can be recreated.
-  }
-
   func buttonClicked() {
-    println()
   }
   
   @IBAction func plusPressed(sender: AnyObject) {

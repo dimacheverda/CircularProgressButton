@@ -22,13 +22,14 @@ class CircularProgressButton: UIButton {
     didSet {
       if progress < 0.0 {
         progress = 0.0
-      } else if progress >= 1.0 {
+        // FIXME: fix bug when 1.0 not >= 1.0
+      } else if progress >= 0.9999999999999 {
         progress = 1.0
       }
       
       circularProgressLayer.strokeEnd = progress
       
-      if Int(progress) == Int(1) {
+      if progress >= 0.9999999999999 {
         buttonState = .Animating
         self.makeOriginalWithDelay(0.2)
       }
@@ -189,6 +190,7 @@ class CircularProgressButton: UIButton {
     targetLayer.addAnimation(group, forKey: "anim")
   }
   
+  // FIXME: fix bug when highlight color disappear after first animation
   private func changeButtonColorTo(color: CGColorRef) {
     foregroundLayer.backgroundColor = color
     foregroundLayer.borderColor = color
@@ -199,8 +201,6 @@ class CircularProgressButton: UIButton {
   
   override func beginTrackingWithTouch(touch: UITouch, withEvent event: UIEvent) -> Bool {
     super.beginTrackingWithTouch(touch, withEvent: event)
-    
-    println("begin")
     
     if event.type == UIEventType.Touches {
       changeButtonColorTo(pressedColor)
@@ -236,7 +236,6 @@ class CircularProgressButton: UIButton {
         }
       }
     }
-    println()
   }
   
   
@@ -279,7 +278,12 @@ class CircularProgressButton: UIButton {
           resetProgressLayer()
           CATransaction.commit()
           
+          
+          
           buttonState = .Small
+          
+          
+          animate()
         }
       }
       if name == "makeOriginal" {
@@ -300,4 +304,21 @@ class CircularProgressButton: UIButton {
     }
   }
   
+  func animate() {
+    delay(seconds: 0.1, {
+      self.progress += 0.05
+      if self.progress < 1.0 {
+        self.animate()
+      }
+    })
+  }
+  
+}
+
+func delay(#seconds: Double, completion:()->()) {
+  let popTime = dispatch_time(DISPATCH_TIME_NOW, Int64( Double(NSEC_PER_SEC) * seconds ))
+  
+  dispatch_after(popTime, dispatch_get_main_queue()) {
+    completion()
+  }
 }
