@@ -10,31 +10,31 @@ import UIKit
 
 class ViewController: UIViewController {
 
-  let button: CircularProgressButton = {
-    let buttonFrame = CGRect(x: 0, y: 0, width: 250, height: 100)
-    let button = CircularProgressButton(frame: buttonFrame, cornerRadius: 20)
-    button.setTitle("Upload", forState: .Normal)
-    return button
-  }()
-  
-  override func viewDidLoad() {
-    super.viewDidLoad()
+    let button: CircularProgressButton = {
+        let buttonFrame = CGRect(x: 0, y: 0, width: 250, height: 100)
+        let button = CircularProgressButton(frame: buttonFrame, cornerRadius: 20)
+        button.setTitle("Upload", forState: .Normal)
+        return button
+    }()
     
-    button.center = view.center
-    button.addTarget(self, action: "buttonClicked", forControlEvents: .TouchUpInside)
-    view.addSubview(button)
-  }
-
-  func buttonClicked() {
-  }
-  
-  @IBAction func plusPressed(sender: AnyObject) {
-    button.progress += 0.1
-  }
-  
-  @IBAction func minusPressed(sender: AnyObject) {
-    button.progress -= 0.1
-  }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        button.center = view.center
+        button.addTarget(self, action: "buttonClicked", forControlEvents: .TouchUpInside)
+        view.addSubview(button)
+    }
+    
+    func buttonClicked() {
+    }
+    
+    @IBAction func plusPressed(sender: AnyObject) {
+        button.progress += 0.1
+    }
+    
+    @IBAction func minusPressed(sender: AnyObject) {
+        button.progress -= 0.1
+    }
 
 }
 
