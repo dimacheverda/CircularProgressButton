@@ -72,7 +72,7 @@ class CircularProgressButton: UIButton {
     prepare()
   }
   
-  required init(coder aDecoder: NSCoder) {
+  required init?(coder aDecoder: NSCoder) {
     
     foregroundLayer = CALayer()
     circularProgressLayer = CAShapeLayer()
@@ -199,19 +199,20 @@ class CircularProgressButton: UIButton {
   
   // MARK: - Touch Tracking
   
-  override func beginTrackingWithTouch(touch: UITouch, withEvent event: UIEvent) -> Bool {
+//  @nonobjc
+  override func beginTrackingWithTouch(touch: UITouch, withEvent event: UIEvent?) -> Bool {
     super.beginTrackingWithTouch(touch, withEvent: event)
     
-    if event.type == UIEventType.Touches {
+    if event?.type == UIEventType.Touches {
       changeButtonColorTo(pressedColor)
     }
     return true
   }
   
-  override func continueTrackingWithTouch(touch: UITouch, withEvent event: UIEvent) -> Bool {
+  override func continueTrackingWithTouch(touch: UITouch, withEvent event: UIEvent?) -> Bool {
     super.continueTrackingWithTouch(touch, withEvent: event)
     
-    var touchEnd = touch.locationInView(self)
+    let touchEnd = touch.locationInView(self)
     if !CGRectContainsPoint(bounds, touchEnd) {
       changeButtonColorTo(originalColor)
       return false
@@ -219,19 +220,18 @@ class CircularProgressButton: UIButton {
     return true
   }
   
-  override func endTrackingWithTouch(touch: UITouch, withEvent event: UIEvent) {
+  override func endTrackingWithTouch(touch: UITouch?, withEvent event: UIEvent?) {
     super.endTrackingWithTouch(touch, withEvent: event)
     
-    if event.type == UIEventType.Touches {
+    if event?.type == UIEventType.Touches {
       
       CATransaction.begin()
       CATransaction.setDisableActions(true)
       changeButtonColorTo(originalColor)
       CATransaction.commit()
       
-      var touchEnd = touch.locationInView(self)
-      if CGRectContainsPoint(bounds, touchEnd) {
-        if buttonState == .Original {
+      if let touchEnd = touch?.locationInView(self) {
+        if CGRectContainsPoint(bounds, touchEnd) && buttonState == .Original {
           makeSmallWithDelay(0)
         }
       }
@@ -241,7 +241,7 @@ class CircularProgressButton: UIButton {
   
   // MARK: - Animation Delegate
   
-  override func animationDidStart(anim: CAAnimation!) {
+  override func animationDidStart(anim: CAAnimation) {
     
     self.buttonState = .Animating
     
@@ -258,14 +258,14 @@ class CircularProgressButton: UIButton {
     }
   }
   
-  override func animationDidStop(anim: CAAnimation!, finished flag: Bool) {
+  override func animationDidStop(anim: CAAnimation, finished flag: Bool) {
     
    let nameValue = anim.valueForKey("name") as? String
     if let name = nameValue {
       if name == "makeSmall" {
         
         if flag == true {
-          let targetLayer: CALayer = anim.valueForKey("layer")! as CALayer
+          let targetLayer: CALayer = anim.valueForKey("layer") as! CALayer
           
           CATransaction.begin()
           CATransaction.setDisableActions(true)
@@ -288,7 +288,7 @@ class CircularProgressButton: UIButton {
       }
       if name == "makeOriginal" {
         if flag == true {
-          let targetLayer: CALayer = anim.valueForKey("layer")! as CALayer
+          let targetLayer: CALayer = anim.valueForKey("layer") as! CALayer
           
           CATransaction.begin()
           CATransaction.setDisableActions(true)
@@ -305,7 +305,7 @@ class CircularProgressButton: UIButton {
   }
   
   func animate() {
-    delay(seconds: 0.1, {
+    delay(seconds: 0.1, completion: {
       self.progress += 0.05
       if self.progress < 1.0 {
         self.animate()
@@ -315,7 +315,9 @@ class CircularProgressButton: UIButton {
   
 }
 
-func delay(#seconds: Double, completion:()->()) {
+// MARK: - Delay function
+
+func delay(seconds seconds: Double, completion:()->()) {
   let popTime = dispatch_time(DISPATCH_TIME_NOW, Int64( Double(NSEC_PER_SEC) * seconds ))
   
   dispatch_after(popTime, dispatch_get_main_queue()) {
