@@ -28,7 +28,7 @@ How to use
 
 Code for initializing button
 
-```
+```swift
 let buttonFrame = CGRect(x: 0, y: 0, width: 250, height: 100)
 let button = CircularProgressButton(frame: buttonFrame, cornerRadius: 20)
 button.setTitle("Upload", forState: .Normal)
